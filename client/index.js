@@ -1,4 +1,5 @@
 /* global io */
+/* global document */
 
 const SCALE = 8;
 
@@ -18,10 +19,17 @@ function setPixel(x, y, color) {
 
 function getPixel(x, y) {
   let color = ctx.getImageData(x * SCALE, y * SCALE, 1, 1).data;
-  color = (color[0] * 65536 + color[1] * 256 + color[2]).toString(16);
+  color = ((color[0] * 65536) + (color[1] * 256) + color[2]).toString(16);
   color = '#000000'.substring(0, 7 - color.length) + color;
   return color;
 }
+
+const shadow = {
+  x: 0,
+  y: 0,
+  color: '#ffffff',
+};
+let isControlsVisible = true;
 
 canvas.style.borderWidth = `${SCALE}px`;
 canvas.width = 512 * SCALE;
@@ -36,13 +44,14 @@ canvas.addEventListener('mousedown', (e) => {
   e.preventDefault();
   switch (e.button) {
     case 0:
-      socket.emit('pixel', { x: Math.floor(e.offsetX / SCALE), y: Math.floor(e.offsetY / SCALE), color: leftColor.value });
       setPixel(Math.floor(e.offsetX / SCALE), Math.floor(e.offsetY / SCALE), leftColor.value);
-      if (typeof lastC !== 'undefined') lastC = leftColor.value;
+      shadow.color = leftColor.value;
+      socket.emit('pixel', { x: Math.floor(e.offsetX / SCALE), y: Math.floor(e.offsetY / SCALE), color: leftColor.value });
       break;
     case 1:
-      leftColor.value = lastC;
+      leftColor.value = shadow.color;
       break;
+    default: break;
   }
 });
 
@@ -50,22 +59,19 @@ canvas.addEventListener('contextmenu', (e) => {
   e.preventDefault();
   socket.emit('pixel', { x: Math.floor(e.offsetX / SCALE), y: Math.floor(e.offsetY / SCALE), color: rightColor.value });
   setPixel(Math.floor(e.offsetX / SCALE), Math.floor(e.offsetY / SCALE), rightColor.value);
-  if (typeof lastC !== 'undefined') lastC = rightColor.value;
+  shadow.color = rightColor.value;
 });
 
-let lastX = 0, lastY = 0, lastC = '#ffffff';
 canvas.addEventListener('mousemove', (e) => {
-  setPixel(lastX, lastY, lastC);
-  lastX = Math.floor(e.offsetX / SCALE);
-  lastY = Math.floor(e.offsetY / SCALE);
-  lastC = getPixel(lastX, lastY);
-  setPixel(lastX, lastY, '#bbbbbb');
-  coords.innerHTML = `(${lastX}, ${lastY})`;
+  setPixel(shadow.x, shadow.y, shadow.color);
+  shadow.x = Math.floor(e.offsetX / SCALE);
+  shadow.y = Math.floor(e.offsetY / SCALE);
+  shadow.color = getPixel(shadow.x, shadow.y);
+  setPixel(shadow.x, shadow.y, '#bbbbbb');
+  coords.innerHTML = `(${shadow.x}, ${shadow.y})`;
 });
 
-let isControlsVisible = true;
 document.addEventListener('keydown', (e) => {
-  console.log(e);
   if (e.keyCode === 72) {
     controls.style.display = isControlsVisible ? 'none' : 'block';
     isControlsVisible = !isControlsVisible;
