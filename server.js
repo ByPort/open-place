@@ -11,7 +11,7 @@ const io = socketio.listen(server);
 
 const sockets = [];
 
-mongoose.connect(`mongodb://localhost/place`);
+mongoose.connect('mongodb://localhost/place');
 mongoose.connection.once('open', () => {});
 
 const Pixel = mongoose.model('Pixel', new mongoose.Schema({
@@ -23,12 +23,18 @@ const Pixel = mongoose.model('Pixel', new mongoose.Schema({
 router.use(express.static(path.resolve(__dirname, 'client')));
 
 io.on('connection', (socket) => {
-  Pixel.find({}, (e, pixels) => {
-    if (e) {
-      console.error(e);
+  Pixel.find().sort({ _id: -1 }).exec((error, pixels) => {
+    if (error) {
+      console.error(error);
       return;
     }
-    socket.emit('pixels', pixels.map(pixel => ({
+    const uniquePixels = [];
+    pixels.forEach((pixel) => {
+      if (uniquePixels.every(upixel => upixel.x !== pixel.x || upixel.y !== pixel.y)) {
+        uniquePixels.push(pixel);
+      }
+    });
+    socket.emit('pixels', uniquePixels.map(pixel => ({
       x: pixel.x,
       y: pixel.y,
       color: pixel.color,
@@ -49,18 +55,19 @@ io.on('connection', (socket) => {
       pixel.y < 0 ||
       pixel.y >= 512
     ) {
+      console.error('Invalid value');
       return;
     }
     socket.broadcast.emit('pixel', pixel);
-    new Pixel(pixel).save((e) => {
-      if (e) {
-        console.error(e);
+    new Pixel(pixel).save((error) => {
+      if (error) {
+        console.error(error);
       }
     });
   });
 });
 
-server.listen(process.env.PORT || 3000, process.env.IP || '0.0.0.0', () => {
+server.listen(process.env.PORT || 3000, process.env.IP || 'localhost', () => {
   const addr = server.address();
   console.log(`Open Place server listening at ${addr.address}:${addr.port}`);
 });
