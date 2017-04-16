@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Open Place</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div id="controls" style="position: fixed; top: 0; left: 0; background-color: #ffffff; border: 1px solid black;">
+    <input id="color-left" type="color" value="#000000"/>
+    <input id="color-right" type="color" value="#ffffff"/>
+    <span id="coords"></span>
+    <span>Press H to hide</span>
+  </div>
+  <canvas id="place" style="border: solid black; cursor: crosshair;"></canvas>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="index.js"></script>
+  <!--<audio autoplay loop src="/somebody once told me.mp3"></audio>-->
+</body>
+</html>

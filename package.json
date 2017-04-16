@@ -1,0 +1,15 @@
+{
+  "name": "open-place",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Analogue of Reddit project Place (https://www.reddit.com/r/place/)",
+  "main": "server.js",
+  "repository": "",
+  "author": "Vladimir Sernatsky <byport1112@gmail.com>",
+  "dependencies": {
+    "express": "~3.2.4",
+    "mongoose": "^4.9.4",
+    "socket.io": "~0.9.14",
+    "socket.io-client": "^1.7.3"
+  }
+}
