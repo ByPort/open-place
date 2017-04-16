@@ -11,13 +11,13 @@ const io = socketio.listen(server);
 
 const sockets = [];
 
-mongoose.connect(`mongodb://${process.env.IP}/place`);
+mongoose.connect(`mongodb://localhost/place`);
 mongoose.connection.once('open', () => {});
 
 const Pixel = mongoose.model('Pixel', new mongoose.Schema({
   x: Number,
   y: Number,
-  color: String
+  color: String,
 }));
 
 router.use(express.static(path.resolve(__dirname, 'client')));
@@ -31,9 +31,8 @@ io.on('connection', (socket) => {
     socket.emit('pixels', pixels.map(pixel => ({
       x: pixel.x,
       y: pixel.y,
-      color: pixel.color
+      color: pixel.color,
     })));
-    // pixels.forEach(pixel => socket.emit('pixel', { x: pixel.x, y: pixel.y, color: pixel.color }));
   });
 
   sockets.push(socket);
@@ -41,8 +40,19 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => sockets.splice(sockets.indexOf(socket), 1));
 
   socket.on('pixel', (pixel) => {
+    if (
+      !Number.isInteger(pixel.x) ||
+      !Number.isInteger(pixel.y) ||
+      !pixel.color.match(/#[a-fA-F0-9]{6}/) ||
+      pixel.x < 0 ||
+      pixel.x >= 512 ||
+      pixel.y < 0 ||
+      pixel.y >= 512
+    ) {
+      return;
+    }
     socket.broadcast.emit('pixel', pixel);
-    (new Pixel(pixel)).save((e) => {
+    new Pixel(pixel).save((e) => {
       if (e) {
         console.error(e);
       }
@@ -50,7 +60,7 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(process.env.PORT || 3000, process.env.IP || '0.0.0.0', function(){
+server.listen(process.env.PORT || 3000, process.env.IP || '0.0.0.0', () => {
   const addr = server.address();
   console.log(`Open Place server listening at ${addr.address}:${addr.port}`);
 });
